@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/mikolalysenko/oregon-synth/issues"
   },
-  "homepage": "https://github.com/mikolalysenko/oregon-synth#readme"
+  "homepage": "https://github.com/mikolalysenko/oregon-synth#readme",
+  "dependencies": {
+    "regl": "^1.0.0"
+  }
 }
