@@ -1,9 +1,37 @@
+// ----------------------------
+const wsock = require('websocket-stream')
+const to = require('to2')
+const split = require('split2')
+const onend = require('end-of-stream')
+
+const kmin = 48
+const kmax = 72
+const NUM_KEYS = kmax - kmin
+
+const state = { time: 0, keys: Array(NUM_KEYS).fill(0) }
+
+;(function recon () {
+  let stream = wsock('ws://192.168.1.54:5000')
+  onend(stream, recon)
+  stream.pipe(split(JSON.parse))
+    .pipe(to.obj(write))
+  return recon
+
+  function write (row, enc, next) {
+    const keydown = (row.values[0] >> 4) & 1
+    const k = row.values[1] - kmin
+    state.time += row.dt
+    state.keys[k] = keydown * row.values[2] / 128
+    console.log(state.keys.join())
+    next()
+  }
+})()
+
 module.exports = function createSynth (options) {
   const regl = options.regl
   const context = options.audioContext
 
   const shaderData = options.shader
-  const uniforms = options.uniforms || {}
   const contextVars = options.context || {}
 
   const bufferSize = options.size || 1024
@@ -22,6 +50,19 @@ module.exports = function createSynth (options) {
     depthStencil: false
   })
 
+  const baseUniforms = {
+    timeOffsetBase: regl.prop('timeOffsetBase'),
+    timeOffsetScale: regl.prop('timeOffsetScale')
+  }
+
+  for (let i = 0; i < NUM_KEYS; ++i) {
+    baseUniforms[`KEY_STATE[${i}]`] = (function (i) {
+      return function () {
+        return state.keys[i]
+      }
+    })(i)
+  }
+
   const generateSound = regl({
     vert: `
     precision highp float;
@@ -38,6 +79,9 @@ module.exports = function createSynth (options) {
     frag: `
     precision highp float;
     varying float offsetTime_;
+
+    #define NUM_KEYS ${NUM_KEYS}
+    uniform float KEY_STATE[NUM_KEYS];
 
     ${shaderData}
 
@@ -83,7 +127,7 @@ module.exports = function createSynth (options) {
     }
 
     void main () {
-      gl_FragColor = encode_float(pcm(offsetTime_));
+      gl_FragColor = encode_float(pcm(offsetTime_, KEY_STATE));
     }
     `,
 
@@ -99,10 +143,7 @@ module.exports = function createSynth (options) {
         4, -4
       ]
     },
-    uniforms: Object.assign({
-      timeOffsetBase: regl.prop('timeOffsetBase'),
-      timeOffsetScale: regl.prop('timeOffsetScale')
-    }, uniforms),
+    uniforms: Object.assign(baseUniforms, options.uniforms || {}),
     count: 3,
     primitive: 'triangles',
     elements: null
