@@ -1,0 +1,19 @@
+{
+  "name": "oregon-synth",
+  "version": "1.0.0",
+  "description": "oregon-synth ============ WebGL powered synth",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikolalysenko/oregon-synth.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mikolalysenko/oregon-synth/issues"
+  },
+  "homepage": "https://github.com/mikolalysenko/oregon-synth#readme"
+}
