@@ -8,7 +8,7 @@ createSynth({
   audioContext,
   shader: `
   float pcm(float t) {
-    return sin(t * 440.0 * ${2.0 * Math.PI});
+    return sin(t * ${2.0 * Math.PI * 400.0});
   }
   `
 }).connect(audioContext.destination)

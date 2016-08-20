@@ -17,7 +17,7 @@ module.exports = function createSynth (options) {
     outputChannels)
 
   const outputFBO = regl.framebuffer({
-    shape: [bufferSize / 4, 1, 4],
+    shape: [bufferSize, 1, 4],
     format: 'rgba',
     depthStencil: false
   })
@@ -26,28 +26,64 @@ module.exports = function createSynth (options) {
     vert: `
     precision highp float;
     attribute vec2 position;
-    uniform float timeOffsetBase;
+    uniform float timeOffsetBase, timeOffsetScale;
     varying float offsetTime_;
 
     void main () {
-      offsetTime_ = timeOffsetBase;
+      offsetTime_ = timeOffsetBase + timeOffsetScale * 0.5 * (position.x + 1.0);
       gl_Position = vec4(position, 0, 1);
     }
     `,
 
     frag: `
     precision highp float;
-    uniform float deltaTime_;
     varying float offsetTime_;
 
     ${shaderData}
 
+    #define FLOAT_MAX  1.70141184e38
+    #define FLOAT_MIN  1.17549435e-38
+
+    lowp vec4 encode_float(highp float v) {
+      highp float av = abs(v);
+
+      //Handle special cases
+      if(av < FLOAT_MIN) {
+        return vec4(0.0, 0.0, 0.0, 0.0);
+      } else if(v > FLOAT_MAX) {
+        return vec4(127.0, 128.0, 0.0, 0.0) / 255.0;
+      } else if(v < -FLOAT_MAX) {
+        return vec4(255.0, 128.0, 0.0, 0.0) / 255.0;
+      }
+
+      highp vec4 c = vec4(0,0,0,0);
+
+      //Compute exponent and mantissa
+      highp float e = floor(log2(av));
+      highp float m = av * pow(2.0, -e) - 1.0;
+
+      //Unpack mantissa
+      c[1] = floor(128.0 * m);
+      m -= c[1] / 128.0;
+      c[2] = floor(32768.0 * m);
+      m -= c[2] / 32768.0;
+      c[3] = floor(8388608.0 * m);
+
+      //Unpack exponent
+      highp float ebias = e + 127.0;
+      c[0] = floor(ebias / 2.0);
+      ebias -= c[0] * 2.0;
+      c[1] += floor(ebias) * 128.0;
+
+      //Unpack sign bit
+      c[0] += 128.0 * step(0.0, -v);
+
+      //Scale back to range
+      return c.abgr / 255.0;
+    }
+
     void main () {
-      gl_FragColor = vec4(
-        pcm(offsetTime_),
-        pcm(offsetTime_ + deltaTime_),
-        pcm(offsetTime_ + 2.0 * deltaTime_),
-        pcm(offsetTime_ + 3.0 * deltaTime_));
+      gl_FragColor = encode_float(pcm(offsetTime_));
     }
     `,
 
@@ -65,7 +101,7 @@ module.exports = function createSynth (options) {
     },
     uniforms: Object.assign({
       timeOffsetBase: regl.prop('timeOffsetBase'),
-      deltaTime: regl.prop('deltaTime')
+      timeOffsetScale: regl.prop('timeOffsetScale')
     }, uniforms),
     count: 3,
     primitive: 'triangles',
@@ -78,16 +114,18 @@ module.exports = function createSynth (options) {
 
   let clockTime = 0
   scriptNode.onaudioprocess = function (event) {
-    const outputBuffer = event.outputBuffer
+    const outputBuffer = event.outputBuffer.getChannelData(0)
     setFBO(() => {
-      generateSound()
-      regl.read({
-        data: outputBuffer,
+      generateSound({
         timeOffsetBase: clockTime,
-        deltaTime: sampleRate
+        timeOffsetScale: outputBuffer.length / sampleRate
+      })
+
+      regl.read({
+        data: new Uint8Array(outputBuffer.buffer)
       })
     })
-    clockTime += sampleRate * outputBuffer.length
+    clockTime += outputBuffer.length / sampleRate
   }
 
   return scriptNode
