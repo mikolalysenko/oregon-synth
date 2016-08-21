@@ -19,16 +19,19 @@ createSynth({
     for (int i = 0; i < NUM_KEYS; ++i) {
       k = keys[i] > 0.0 ? 1.0 : 0.0;
       m += k;
-      x = pow(2.0, float(i + 48) / 12.0);
-      result += k * clamp(0.0,1.0,0.0
-        + sin(tt*50.0*x) * 0.3
-        + sin(tt*50.0*3.0*x) * 0.2
-        + sin(tt*50.0*5.0*x) * 0.1
-        + sin(0.5 + sin((mod(tt,0.25)+10.0) * 20.0)) * 0.3
-      );
+      x = pow(2.0, float(i) / 12.0);
+      result += k * sin(tt*200.0*x) * 0.3;
     }
-    return result / sqrt(m);
-  }
+    return clamp(-1.0,1.0,result / sqrt(m));
+  }`,
+  filter: `
+    float filter(float keys[NUM_KEYS]) {
+      float result = 0.0;
+      for (int i = 0; i < 10; i++) {
+        result += clamp(-1.0,1.0,sample(i)) / 10.0;
+      }
+      return result;
+    }
   `
 }).connect(audioContext.destination)
 
@@ -63,11 +66,7 @@ const visual = createVisual({
   feedback: `
     vec4 feedback(vec2 uv, float t, float keys[NUM_KEYS],
     sampler2D image[2]) {
-      float result = 0.0;
-      for (int i = 0; i < 40; i++) {
-        result += texture2D(image[i+1], uv);
-      }
-      return result / 40.0;
+      return vec4(0,0,0,0);
     }
   `,
   draw: () => {
