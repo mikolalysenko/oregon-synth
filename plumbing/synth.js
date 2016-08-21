@@ -121,13 +121,10 @@ module.exports = function createSynth (options) {
 
     float sample (float delay) {
       float t = shift - delay / float(SAMPLE_COUNT);
-      /*
       return mix(
-        texture2D(buffer[0], vec2(t + 1.0, 0.0)).r,
         texture2D(buffer[1], vec2(t, 0.0)).r,
+        texture2D(buffer[0], vec2(t + 1.0, 0.0)).r,
         step(t, 0.0));
-      */
-      return texture2D(buffer[1], vec2(t, 0.0)).r;
     }
 
     ${filterCode}
@@ -225,6 +222,7 @@ module.exports = function createSynth (options) {
         data: new Uint8Array(outputBuffer.buffer)
       })
     })
+
     clockTime += outputBuffer.length / sampleRate
     audioTick = audioTick + 1
   }

@@ -26,7 +26,11 @@ createSynth({
   `,
   filter: `
   float filter (float keys[NUM_KEYS]) {
-    return sample(0.0);
+    float result = 0.0;
+    for (int i = 0; i < 20; ++i) {
+      result += sample(float(i));
+    }
+    return result;
   }
   `
 }).connect(audioContext.destination)
