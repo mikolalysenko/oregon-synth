@@ -3,8 +3,8 @@ const to = require('to2')
 const split = require('split2')
 const onend = require('end-of-stream')
 
-const kmin = 48
-const kmax = 72
+const kmin = 24
+const kmax = 144
 const NUM_KEYS = kmax - kmin
 
 module.exports = function () {

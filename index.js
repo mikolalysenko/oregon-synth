@@ -20,12 +20,16 @@ createSynth({
     float k, x, m = 0.0;
     float tt = ${2.0 * Math.PI} * t;
     for (int i = 0; i < NUM_KEYS; ++i) {
-      k = keys[i] > 0.0 ? 1.0 : 0.0;
+      k = step(0.1, keys[i]);
       m += k;
-      x = pow(2.0, float(i) / 12.0);
-      result += k * sin(tt*200.0*x) * 0.3;
+      x = pow(2.0, float(i+60) / 12.0);
+      result += 0.0
+        + k * sin(tt*x*1.0) * 0.3
+        + k * sin(tt*x*2.0) * 0.3
+        + k * sin(sin(tt*x*5.0)*(10.0+sin(mod(tt,1.0)+2.0))) * 0.3
+      ;
     }
-    return result / sqrt(m);
+    return result / (m+1.0);
   }`,
   filter: `
     float filter(float keys[NUM_KEYS]) {
@@ -38,6 +42,7 @@ createSynth({
   `
 }).connect(audioContext.destination)
 
+/*
 const simpleDraw = regl({
   vert: `
   precision highp float;
@@ -79,3 +84,4 @@ vec4 feedback(vec2 uv, float t, float keys[NUM_KEYS], sampler2D image[2]) {
 regl.frame(() => {
   visual()
 })
+*/
