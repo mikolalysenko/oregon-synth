@@ -1,4 +1,7 @@
-const regl = require('regl')()
+const regl = require('regl')({
+  extensions: 'OES_texture_float',
+  optionalExtensions: 'OES_texture_float_linear'
+})
 const keyboard = require('./plumbing/keyboard')()
 const createSynth = require('./plumbing/synth')
 const createVisual = require('./plumbing/visual')
@@ -15,10 +18,15 @@ createSynth({
   float pcm(float t, float keys[NUM_KEYS]) {
     float result = 0.0;
     for (int i = 0; i < NUM_KEYS; ++i) {
-      result += 10.0 * keys[i] *
+      result += 0.5 * keys[i] *
       sin(t * ${2.0 * Math.PI * 100.0} * pow(2.0, float(i + 48) / 12.0));
     }
     return result;
+  }
+  `,
+  filter: `
+  float filter (float keys[NUM_KEYS]) {
+    return sample(0.0);
   }
   `
 }).connect(audioContext.destination)
@@ -53,7 +61,7 @@ const visual = createVisual({
   keyboard,
   feedback: `
 vec4 feedback(vec2 uv, float t, float keys[NUM_KEYS], sampler2D image[2]) {
-  return 0.5 * texture2D(image[1], uv);
+  return mix(texture2D(image[1], uv), texture2D(image[0], uv), 0.8);
 }
 `,
   draw: () => {

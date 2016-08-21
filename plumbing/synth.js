@@ -5,7 +5,8 @@ module.exports = function createSynth (options) {
 
   const NUM_KEYS = state.keys.length
 
-  const shaderData = options.shader
+  const shaderCode = options.shader
+  const filterCode = options.filter
   const contextVars = options.context || {}
 
   const bufferSize = options.size || 1024
@@ -18,9 +19,22 @@ module.exports = function createSynth (options) {
     inputChannels,
     outputChannels)
 
-  const outputFBO = regl.framebuffer({
+  const stateBuffer = Array(2).fill().map(() =>
+    regl.framebuffer({
+      color: regl.texture({
+        shape: [bufferSize, 1, 4],
+        format: 'rgba',
+        type: 'float',
+        wrap: 'repeat',
+        mag: regl.hasExtension('OES_texture_float_linear')
+          ? 'linear'
+          : 'nearest'
+      }),
+      depthStencil: false
+    }))
+
+  const outputBuffer = regl.framebuffer({
     shape: [bufferSize, 1, 4],
-    format: 'rgba',
     depthStencil: false
   })
 
@@ -38,6 +52,8 @@ module.exports = function createSynth (options) {
   }
 
   const generateSound = regl({
+    framebuffer: regl.prop('activeBuffer'),
+
     vert: `
     precision highp float;
     attribute vec2 position;
@@ -57,7 +73,64 @@ module.exports = function createSynth (options) {
     #define NUM_KEYS ${NUM_KEYS}
     uniform float KEY_STATE[NUM_KEYS];
 
-    ${shaderData}
+    ${shaderCode}
+
+    void main () {
+      gl_FragColor = vec4(pcm(offsetTime_, KEY_STATE), 0, 0, 1);
+    }`,
+
+    context: contextVars,
+    depth: {
+      enable: false,
+      mask: false
+    },
+    attributes: {
+      position: [
+        -4, 0,
+        4, 4,
+        4, -4
+      ]
+    },
+    uniforms: Object.assign(baseUniforms, options.uniforms || {}),
+    count: 3,
+    primitive: 'triangles',
+    elements: null
+  })
+
+  const filterSound = regl({
+    vert: `
+    precision highp float;
+    attribute vec2 position;
+    varying float shift;
+
+    void main () {
+      shift = 0.5 * (position.x + 1.0);
+      gl_Position = vec4(position, 0, 1);
+    }
+    `,
+
+    frag: `
+    precision highp float;
+    varying float offsetTime_;
+
+    #define NUM_KEYS ${NUM_KEYS}
+    #define SAMPLE_COUNT ${bufferSize}
+    uniform float KEY_STATE[NUM_KEYS];
+    uniform sampler2D buffer[2];
+    varying float shift;
+
+    float sample (float delay) {
+      float t = shift - delay / float(SAMPLE_COUNT);
+      /*
+      return mix(
+        texture2D(buffer[0], vec2(t + 1.0, 0.0)).r,
+        texture2D(buffer[1], vec2(t, 0.0)).r,
+        step(t, 0.0));
+      */
+      return texture2D(buffer[1], vec2(t, 0.0)).r;
+    }
+
+    ${filterCode}
 
     #define FLOAT_MAX  1.70141184e38
     #define FLOAT_MIN  1.17549435e-38
@@ -101,7 +174,7 @@ module.exports = function createSynth (options) {
     }
 
     void main () {
-      gl_FragColor = encode_float(pcm(offsetTime_, KEY_STATE));
+      gl_FragColor = encode_float(filter(KEY_STATE));
     }
     `,
 
@@ -117,30 +190,43 @@ module.exports = function createSynth (options) {
         4, -4
       ]
     },
-    uniforms: Object.assign(baseUniforms, options.uniforms || {}),
+    uniforms: Object.assign(
+      baseUniforms,
+      options.uniforms || {}, {
+        'buffer[0]': regl.prop('prevBuffer'),
+        'buffer[1]': regl.prop('curBuffer')
+      }),
     count: 3,
     primitive: 'triangles',
     elements: null
   })
 
   const setFBO = regl({
-    framebuffer: outputFBO
+    framebuffer: outputBuffer
   })
 
   let clockTime = 0
+  let audioTick = 0
   scriptNode.onaudioprocess = function (event) {
     const outputBuffer = event.outputBuffer.getChannelData(0)
-    setFBO(() => {
-      generateSound({
-        timeOffsetBase: clockTime,
-        timeOffsetScale: outputBuffer.length / sampleRate
-      })
 
+    generateSound({
+      timeOffsetBase: clockTime,
+      timeOffsetScale: outputBuffer.length / sampleRate,
+      activeBuffer: stateBuffer[audioTick % 2]
+    })
+
+    setFBO(() => {
+      filterSound({
+        prevBuffer: stateBuffer[(audioTick + 1) % 2],
+        curBuffer: stateBuffer[audioTick % 2]
+      })
       regl.read({
         data: new Uint8Array(outputBuffer.buffer)
       })
     })
     clockTime += outputBuffer.length / sampleRate
+    audioTick = audioTick + 1
   }
 
   return scriptNode

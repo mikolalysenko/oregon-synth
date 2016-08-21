@@ -22,7 +22,7 @@ module.exports = function ({
     varying vec2 uv;
 
     void main () {
-      uv = 2.0 * (position + 1.0);
+      uv = 0.5 * (position + 1.0);
       gl_Position = vec4(position, 0, 1);
     }
     `,
