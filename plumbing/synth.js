@@ -1,35 +1,9 @@
-// ----------------------------
-const wsock = require('websocket-stream')
-const to = require('to2')
-const split = require('split2')
-const onend = require('end-of-stream')
-
-const kmin = 48
-const kmax = 72
-const NUM_KEYS = kmax - kmin
-
-const state = { time: 0, keys: Array(NUM_KEYS).fill(0) }
-
-;(function recon () {
-  let stream = wsock('ws://192.168.1.54:5000')
-  onend(stream, recon)
-  stream.pipe(split(JSON.parse))
-    .pipe(to.obj(write))
-  return recon
-
-  function write (row, enc, next) {
-    const keydown = (row.values[0] >> 4) & 1
-    const k = row.values[1] - kmin
-    state.time += row.dt
-    state.keys[k] = keydown * row.values[2] / 128
-    console.log(state.keys.join())
-    next()
-  }
-})()
-
 module.exports = function createSynth (options) {
   const regl = options.regl
   const context = options.audioContext
+  const state = options.keyboard
+
+  const NUM_KEYS = state.keys.length
 
   const shaderData = options.shader
   const contextVars = options.context || {}
