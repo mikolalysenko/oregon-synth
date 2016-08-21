@@ -1,16 +1,12 @@
 const regl = require('regl')({
-  extensions: 'OES_texture_float',
-  optionalExtensions: 'OES_texture_float_linear'
+  extensions: ['OES_texture_float', 'OES_element_index_uint'],
+  optionalExtensions: 'OES_texture_float_linear',
+  pixelRatio: 1
 })
 const keyboard = require('./plumbing/keyboard')()
-const createSynth = require('./plumbing/synth')
-const createVisual = require('./plumbing/visual')
-
-const NUM_KEYS = keyboard.keys.length
-
 const audioContext = new window.AudioContext()
 
-createSynth({
+require('./gfx')({
   regl,
   audioContext,
   keyboard,
@@ -42,7 +38,6 @@ createSynth({
   `
 }).connect(audioContext.destination)
 
-/*
 const simpleDraw = regl({
   vert: `
   precision highp float;
@@ -68,20 +63,8 @@ const simpleDraw = regl({
   primitive: 'points'
 })
 
-const visual = createVisual({
+require('./sfx')({
   regl,
-  keyboard,
-  feedback: `
-vec4 feedback(vec2 uv, float t, float keys[NUM_KEYS], sampler2D image[2]) {
-  return mix(texture2D(image[1], uv), texture2D(image[0], uv), 0.8);
-}
-`,
-  draw: () => {
-    simpleDraw()
-  }
+  audioContext,
+  keyboard
 })
-
-regl.frame(() => {
-  visual()
-})
-*/

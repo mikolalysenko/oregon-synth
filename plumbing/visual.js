@@ -37,7 +37,8 @@ module.exports = function ({
     context: {
       keys: keyboard.keys
     },
-    count: 3
+    count: 3,
+    lineWidth: 8
   })
 
   let drawFeedback, feedbackTextures
@@ -53,6 +54,7 @@ module.exports = function ({
       uniform sampler2D feedbackTexture[2];
       uniform float keys[NUM_KEYS];
       uniform float time;
+      uniform vec2 screenSize;
       varying vec2 uv;
 
       ${feedback}
@@ -64,7 +66,8 @@ module.exports = function ({
 
       uniforms: {
         'feedbackTexture[0]': ({tick}) => feedbackTextures[tick % 2],
-        'feedbackTexture[1]': ({tick}) => feedbackTextures[(tick + 1) % 2]
+        'feedbackTexture[1]': ({tick}) => feedbackTextures[(tick + 1) % 2],
+        screenSize: ({viewportWidth, viewportHeight}) => [viewportWidth, viewportHeight]
       },
 
       depth: {
@@ -75,8 +78,10 @@ module.exports = function ({
       blend: {
         enable: true,
         func: {
-          src: 'src alpha',
-          dst: 'one minus src alpha'
+          srcRGB: 1,
+          srcAlpha: 1,
+          dst: 'one minus src alpha',
+          dstAlpha: 1
         },
         equation: 'add'
       }
@@ -85,16 +90,12 @@ module.exports = function ({
 
   return function () {
     setupShaders((context) => {
-      regl.clear({
-        color: [0, 0, 0, 0],
-        depth: true
-      })
       if (draw) {
         draw(context)
       }
       if (feedback) {
         drawFeedback()
-        feedbackTextures[context.tick % 2]({
+          feedbackTextures[context.tick % 2]({
           copy: true
         })
       }

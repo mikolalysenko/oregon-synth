@@ -20,6 +20,8 @@
     "end-of-stream": "^1.1.0",
     "midi": "^0.9.5",
     "regl": "^1.0.0",
+    "simplicial-complex": "^1.0.0",
+    "sphere-mesh": "^0.2.2",
     "split2": "^2.1.0",
     "to2": "^1.0.0",
     "websocket-stream": "^3.2.1"
