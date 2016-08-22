@@ -24,6 +24,7 @@
     "sphere-mesh": "^0.2.2",
     "split2": "^2.1.0",
     "to2": "^1.0.0",
+    "vectorize-text": "^3.0.2",
     "websocket-stream": "^3.2.1"
   }
 }

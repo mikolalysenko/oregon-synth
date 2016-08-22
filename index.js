@@ -36,31 +36,6 @@ require('./gfx')({
       return result;
     }
   `
-}).connect(audioContext.destination)
-
-const simpleDraw = regl({
-  vert: `
-  precision highp float;
-  attribute float x, key;
-  void main () {
-    gl_Position = vec4(x, key, 0, 1);
-    gl_PointSize = 16.0;
-  }
-  `,
-
-  frag: `
-  precision highp float;
-  void main () {
-    gl_FragColor = vec4(1, 0, 0, 1);
-  }
-  `,
-
-  attributes: {
-    x: Array(NUM_KEYS).fill().map((_, i) => 2.0 * i / NUM_KEYS - 1.0),
-    key: regl.context('keys')
-  },
-  count: NUM_KEYS,
-  primitive: 'points'
 })
 
 require('./sfx')({

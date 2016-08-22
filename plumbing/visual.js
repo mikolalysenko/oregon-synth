@@ -95,7 +95,7 @@ module.exports = function ({
       }
       if (feedback) {
         drawFeedback()
-          feedbackTextures[context.tick % 2]({
+        feedbackTextures[context.tick % 2]({
           copy: true
         })
       }

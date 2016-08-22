@@ -1,10 +1,73 @@
 const createVisual = require('./plumbing/visual')
 const sphere = require('sphere-mesh')(20, 1)
-const sc = require('simplicial-complex')
 const mat4 = require('gl-mat4')
+const vectorizeText = require('vectorize-text')
+
+const text = require('./text.json')
 
 module.exports = function ({regl, keyboard}) {
   const NUM_KEYS = keyboard.keys.length
+
+  const perspectiveMatrix = new Float32Array(16)
+  const viewMatrix = new Float32Array(16)
+
+  const textBuffers = text.map((str) => {
+    const mesh = vectorizeText(str, {
+      triangles: true
+    })
+    return {
+      elements: regl.elements(mesh.cells),
+      positions: regl.buffer(mesh.positions)
+    }
+  })
+
+  const drawText = regl({
+    vert: `
+    precision highp float;
+    attribute vec2 position;
+    uniform vec3 offset;
+    uniform float angle, scale;
+    uniform mat4 projection;
+    vec2 rotate (vec2 p) {
+      float c = cos(angle);
+      float s = sin(angle);
+      return vec2(
+        c * p.x - s * p.y,
+        s * p.x + c * p.y);
+    }
+    void main () {
+      gl_Position = projection * vec4(
+        scale * rotate(vec2(position.x, -position.y)) + offset.xy,
+        offset.z,
+        1);
+    }
+    `,
+
+    frag: `
+    void main () {
+      gl_FragColor = vec4(1, 1, 1, 1);
+    }
+    `,
+
+    attributes: {
+      position: (context, {symbol}) =>
+        textBuffers[symbol % textBuffers.length].positions
+    },
+    uniforms: {
+      offset: regl.prop('offset'),
+      angle: regl.prop('angle'),
+      scale: regl.prop('scale'),
+      projection: ({viewportWidth, viewportHeight}) =>
+        mat4.perspective(
+          perspectiveMatrix,
+          Math.PI / 4.0,
+          viewportWidth / viewportHeight,
+          0.01,
+          1000.0)
+    },
+    elements: (context, {symbol}) =>
+      textBuffers[symbol % textBuffers.length].elements
+  })
 
   const drawLine = regl({
     vert: `
@@ -34,9 +97,6 @@ module.exports = function ({regl, keyboard}) {
     primitive: 'line strip'
   })
 
-  const perspectiveMatrix = new Float32Array(16)
-  const viewMatrix = new Float32Array(16)
-
   const drawSphere = regl({
     vert: `
     precision highp float;
@@ -47,31 +107,19 @@ module.exports = function ({regl, keyboard}) {
 
     varying vec3 fragPos;
 
-    vec4 quatExp (vec4 q) {
-      float theta = length(q.xyz);
-      return exp(q.w) * vec4(sin(theta) * q.xyz / theta, cos(theta));
-    }
-
-    vec4 weights (vec3 w) {
-      return quatExp(vec4(w * position, 0));
-    }
-
     void main () {
-      vec4 coeffs[6];
-      coeffs[0] = weights(vec3(3, 11, 7));
-      coeffs[1] = weights(vec3(22, 3, 9));
-      coeffs[2] = weights(vec3(9, 33, 1));
-      coeffs[3] = weights(vec3(3, 2, 13));
-      coeffs[4] = weights(vec3(50, 3, 2));
-      coeffs[5] = weights(vec3(2, 19, 15));
-
       float d = 1.0;
-      for (int i = 0; i < 6; ++i) {
-        vec4 w = coeffs[i];
-        d += w.x * keys[4 * i] +
-             w.y * keys[4 * i + 1] +
-             w.z * keys[4 * i + 2] +
-             w.w * keys[4 * i + 3];
+      for (int i = 0; i < ${NUM_KEYS}; ++i) {
+        vec3 s = vec3(
+          mod(float(37 * i), 53.0),
+          mod(float(13 * i), 91.0),
+          mod(float(23 * i), 89.0)) * position;
+        float theta = length(s);
+        vec3 V = normalize(vec3(
+          sin(float(8 * i)),
+          sin(float(11 * i) + 3.0),
+          sin(float(5 * i) + 1.3)));
+        d += keys[i] * sin(theta) * dot(V, s) / theta;
       }
 
       fragPos = position;
@@ -119,6 +167,29 @@ module.exports = function ({regl, keyboard}) {
     elements: sphere.cells // sc.skeleton(sphere.cells, 1)
   })
 
+  function generateText (text) {
+    const angle = 2.0 * Math.PI * ((Math.random() * 4) | 0) / 4.0
+    const velocity = [Math.cos(angle), Math.sin(angle)]
+    const distance = 100.0 * Math.random() + 1.0
+    const scale = 40.0 * Math.random() + 5.0
+    const s = distance * scale
+    const offset = [
+      -velocity[0] * s,
+      -velocity[1] * s,
+      -distance
+    ]
+    return {
+      offset,
+      velocity,
+      lifetime: s * (4.0 + 4.0 * Math.random()),
+      scale,
+      angle,
+      symbol: (Math.random() * textBuffers.length) | 0
+    }
+  }
+
+  const textElements = Array(40).fill().map(() => generateText({}))
+
   const visual = createVisual({
     regl,
     keyboard,
@@ -147,6 +218,18 @@ module.exports = function ({regl, keyboard}) {
       })
       drawLine()
       drawSphere()
+      drawText(textElements)
+
+      for (let i = 0; i < textElements.length; ++i) {
+        const text = textElements[i]
+        for (let j = 0; j < 2; ++j) {
+          text.offset[j] += text.velocity[j]
+        }
+        text.lifetime -= 1
+        if (text.lifetime < 0) {
+          textElements[i] = generateText()
+        }
+      }
     }
   })
 
