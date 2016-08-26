@@ -11,11 +11,12 @@ module.exports = function () {
   const state = {
     time: 0,
     keys: Array(NUM_KEYS).fill(0),
+    times: Array(NUM_KEYS*2).fill(0),
     onChange: null
   }
 
   ;(function recon () {
-    let stream = wsock('ws://192.168.1.54:5000')
+    let stream = wsock('ws:///10.0.213.215:5000')
     onend(stream, recon)
     stream.pipe(split(JSON.parse))
       .pipe(to.obj(write))
@@ -26,6 +27,7 @@ module.exports = function () {
       const k = row.values[1] - kmin
       state.time += row.dt
       state.keys[k] = keydown * row.values[2] / 128
+      state.times[k*2+keydown] = state.time
       if (state.onChange) {
         state.onChange(state.keys)
       }
