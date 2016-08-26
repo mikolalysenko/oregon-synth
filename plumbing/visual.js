@@ -37,8 +37,7 @@ module.exports = function ({
     context: {
       keys: keyboard.keys
     },
-    count: 3,
-    lineWidth: 8
+    count: 3
   })
 
   let drawFeedback, feedbackTextures
