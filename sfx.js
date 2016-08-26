@@ -14,18 +14,18 @@ module.exports = function ({regl, audioContext, keyboard}) {
         k = step(0.01, keys[i]);
         m += k;
         x = pow(2.0, float(i) / 12.0);
-        result += k * sin(tt * 200.0 * x) * 0.3;
+        result += k * sin(t * tt * 200.0 * x);
       }
-      return result / sqrt(m);
+      return result;
     }`,
     filter: `
-      float filter(float keys[NUM_KEYS]) {
-        float result = 0.0;
-        for (int i = 0; i < 10; i++) {
-          result += sample(float(i)) / 10.0;
-        }
-        return result;
+    float filter(float keys[NUM_KEYS]) {
+      float result = sample(0.0);
+      for (int i = 1; i < 40; i++) {
+        result += sample(float(i)) * exp(-0.25 * float(i * i)) / 4.0;
       }
+      return result;
+    }
     `
   }).connect(audioContext.destination)
 }

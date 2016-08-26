@@ -15,7 +15,7 @@ module.exports = function () {
   }
 
   ;(function recon () {
-    let stream = wsock('ws://192.168.1.54:5000')
+    let stream = wsock('ws://192.168.15.173:5000')
     onend(stream, recon)
     stream.pipe(split(JSON.parse))
       .pipe(to.obj(write))

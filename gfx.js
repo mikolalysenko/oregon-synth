@@ -77,7 +77,6 @@ module.exports = function ({regl, keyboard}) {
     void main () {
       shift = x;
       gl_Position = vec4(x, key - 0.5, 0, 1);
-      gl_PointSize = 16.0;
     }
     `,
 
@@ -93,6 +92,7 @@ module.exports = function ({regl, keyboard}) {
       x: Array(NUM_KEYS).fill().map((_, i) => 2.0 * i / (NUM_KEYS - 1) - 1.0),
       key: regl.context('keys')
     },
+    lineWidth: Math.min(8, regl.limits.lineWidth[1]),
     count: NUM_KEYS,
     primitive: 'line strip'
   })
