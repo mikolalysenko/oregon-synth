@@ -1,4 +1,4 @@
-const MOVIE_TIME = 10e4
+const MOVIE_TIME = 1e4
 
 module.exports = function (args) {
   const regl = args.regl
