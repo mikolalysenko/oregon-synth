@@ -21,8 +21,10 @@ wsock.createServer({ server: server }, function (stream) {
 })
 
 input.on('message', function (dt, msg) {
+  var row = { dt: dt, values: msg }
   for (var i = 0; i < streams.length; i++) {
-    streams[i].write(JSON.stringify({ dt: dt, values: msg }) + '\n')
+    streams[i].write(JSON.stringify(row) + '\n')
   }
+  console.log(row)
 })
 input.openPort(1)
