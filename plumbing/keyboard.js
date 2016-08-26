@@ -11,7 +11,7 @@ module.exports = function () {
   const state = {
     time: 0,
     keys: Array(NUM_KEYS).fill(0),
-    times: Array(NUM_KEYS*2).fill(0),
+    times: Array(NUM_KEYS * 2).fill(0),
     onChange: null
   }
 
@@ -27,7 +27,7 @@ module.exports = function () {
       const k = row.values[1] - kmin
       state.time += row.dt
       state.keys[k] = keydown * row.values[2] / 128
-      state.times[k*2+keydown] = state.time
+      state.times[k * 2 + keydown] = state.time
       if (state.onChange) {
         state.onChange(state.keys)
       }

@@ -8,34 +8,7 @@ const audioContext = new window.AudioContext()
 
 require('./gfx')({
   regl,
-  audioContext,
-  keyboard,
-  shader: `
-  float pcm(float t, float keys[NUM_KEYS]) {
-    float result = 0.0;
-    float k, x, m = 0.0;
-    float tt = ${2.0 * Math.PI} * t;
-    for (int i = 0; i < NUM_KEYS; ++i) {
-      k = step(0.1, keys[i]);
-      m += k;
-      x = pow(2.0, float(i+60) / 12.0);
-      result += 0.0
-        + k * sin(tt*x*1.0) * 0.3
-        + k * sin(tt*x*2.0) * 0.3
-        + k * sin(sin(tt*x*5.0)*(10.0+sin(mod(tt,1.0)+2.0))) * 0.3
-      ;
-    }
-    return result / (m+1.0);
-  }`,
-  filter: `
-    float filter(float keys[NUM_KEYS]) {
-      float result = 0.0;
-      for (int i = 0; i < 10; i++) {
-        result += sample(float(i)) / 10.0;
-      }
-      return result;
-    }
-  `
+  keyboard
 })
 
 require('./sfx')({
