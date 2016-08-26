@@ -1,3 +1,5 @@
+const clock = require('./clock')
+
 module.exports = function createSynth (options) {
   const regl = options.regl
   const context = options.audioContext
@@ -13,6 +15,8 @@ module.exports = function createSynth (options) {
   const inputChannels = 0
   const outputChannels = 1
   const sampleRate = context.sampleRate
+
+  clock.sampleRate = sampleRate
 
   const scriptNode = context.createScriptProcessor(
     bufferSize,
@@ -229,6 +233,8 @@ module.exports = function createSynth (options) {
 
     clockTime += outputBuffer.length / sampleRate
     audioTick = audioTick + 1
+
+    clock.time = clockTime
   }
 
   return scriptNode

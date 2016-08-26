@@ -7,7 +7,7 @@ const kmin = 24
 const kmax = 144
 const NUM_KEYS = kmax - kmin
 
-module.exports = function () {
+module.exports = function (clock) {
   const state = {
     time: 0,
     keys: Array(NUM_KEYS).fill(0),
@@ -25,7 +25,7 @@ module.exports = function () {
     function write (row, enc, next) {
       const keydown = (row.values[0] >> 4) & 1
       const k = row.values[1] - kmin
-      state.time += row.dt
+      state.time = clock.time
       state.keys[k] = keydown * row.values[2] / 128
       state.times[k * 2 + keydown] = state.time
       if (state.onChange) {

@@ -108,9 +108,8 @@ module.exports = function ({regl, keyboard}) {
                                       dot(p2,x2), dot(p3,x3) ) );
         }
 
-
       void main () {
-        float texId =
+        float intensity =
           (1.0 + sin(
             3.0 * fposition.z +
             0.5 * fposition.y +

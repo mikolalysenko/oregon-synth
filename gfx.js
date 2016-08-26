@@ -7,7 +7,7 @@ module.exports = function (args) {
     require('./visuals/sph')(args)
   ]
 
-  let activeVisual = visuals[0]
+  let activeVisual = visuals[1]
   let visualTime = MOVIE_TIME
   regl.frame(({tick}) => {
     if (--visualTime < 0) {
