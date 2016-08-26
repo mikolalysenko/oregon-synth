@@ -90,7 +90,7 @@ module.exports = function ({regl, keyboard}) {
 
     attributes: {
       x: Array(NUM_KEYS).fill().map((_, i) => 2.0 * i / (NUM_KEYS - 1) - 1.0),
-      key: regl.context('keys')
+      key: regl.context('keyboard.keys')
     },
     lineWidth: Math.min(8, regl.limits.lineWidthDims[1]),
     count: NUM_KEYS,
@@ -103,7 +103,7 @@ module.exports = function ({regl, keyboard}) {
     attribute vec3 position;
 
     uniform mat4 projection, view;
-    uniform float keys[${NUM_KEYS}];
+    uniform vec3 keys[${NUM_KEYS}];
 
     varying vec3 fragPos;
 
@@ -119,7 +119,7 @@ module.exports = function ({regl, keyboard}) {
           sin(float(8 * i)),
           sin(float(11 * i) + 3.0),
           sin(float(5 * i) + 1.3)));
-        d += keys[i] * sin(theta) * dot(V, s) / theta;
+        d += keys[i].x * sin(theta) * dot(V, s) / theta;
       }
 
       fragPos = position;
@@ -194,7 +194,7 @@ module.exports = function ({regl, keyboard}) {
     regl,
     keyboard,
     feedback: `
-  vec4 feedback(vec2 uv, float t, float keys[NUM_KEYS], sampler2D image[2]) {
+  vec4 feedback(vec2 uv, float t, vec3 keys[NUM_KEYS], sampler2D image[2]) {
     vec4 result = texture2D(image[1], uv);
     vec2 d = uv - 0.5;
     float w = 1.0;
@@ -202,8 +202,8 @@ module.exports = function ({regl, keyboard}) {
       float sx = 2.0 * cos(float(i) * 0.5);
       float sy = 2.0 * cos(float(i) * 0.5);
       float skew = pow(2.0 * cos(0.9 * float(i)), 10.0) / 1024.0;
-      w += keys[i];
-      result += keys[i] * texture2D(image[0], uv +
+      w += keys[i].x;
+      result += keys[i].x * texture2D(image[0], uv +
         0.1 * mat2(
           sx * skew, (1.0 - skew) * sy,
           (skew - 1.0) * sx, sy) * d);

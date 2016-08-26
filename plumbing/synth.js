@@ -45,8 +45,12 @@ module.exports = function createSynth (options) {
 
   for (let i = 0; i < NUM_KEYS; ++i) {
     baseUniforms[`KEY_STATE[${i}]`] = (function (i) {
+      var result = [0, 0, 0]
       return function () {
-        return state.keys[i]
+        result[0] = state.keys[i]
+        result[1] = state.times[2 * i]
+        result[2] = state.times[2 * i + 1]
+        return result
       }
     })(i)
   }
@@ -71,7 +75,7 @@ module.exports = function createSynth (options) {
     varying float offsetTime_;
 
     #define NUM_KEYS ${NUM_KEYS}
-    uniform float KEY_STATE[NUM_KEYS];
+    uniform vec3 KEY_STATE[NUM_KEYS];
 
     ${shaderCode}
 
@@ -115,7 +119,7 @@ module.exports = function createSynth (options) {
 
     #define NUM_KEYS ${NUM_KEYS}
     #define SAMPLE_COUNT ${bufferSize}
-    uniform float KEY_STATE[NUM_KEYS];
+    uniform vec3 KEY_STATE[NUM_KEYS];
     uniform sampler2D buffer[2];
     varying float shift;
 

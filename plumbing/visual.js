@@ -13,7 +13,15 @@ module.exports = function ({
   }
 
   for (let i = 0; i < NUM_KEYS; ++i) {
-    commonUniforms['keys[' + i + ']'] = ((i) => () => keyboard.keys[i])(i)
+    commonUniforms['keys[' + i + ']'] = (function (i) {
+      var result = [0, 0, 0]
+      return function () {
+        result[0] = keyboard.keys[i]
+        result[1] = keyboard.times[2 * i]
+        result[2] = keyboard.times[2 * i + 1]
+        return result
+      }
+    })(i)
   }
 
   const setupShaders = regl({
@@ -37,7 +45,7 @@ module.exports = function ({
     },
     uniforms: commonUniforms,
     context: {
-      keys: keyboard.keys
+      keyboard: keyboard
     },
     count: 3
   })
@@ -56,7 +64,7 @@ module.exports = function ({
       #define NUM_KEYS ${NUM_KEYS}
 
       uniform sampler2D feedbackTexture[2];
-      uniform float keys[NUM_KEYS];
+      uniform vec3 keys[NUM_KEYS];
       uniform float time;
       uniform vec2 screenSize;
       varying vec2 uv;
