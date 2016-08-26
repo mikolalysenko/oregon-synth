@@ -11,10 +11,13 @@ module.exports = function ({regl, audioContext, keyboard}) {
       float k, x, m = 0.0;
       float tt = ${2.0 * Math.PI} * t;
       for (int i = 0; i < NUM_KEYS; ++i) {
-        k = step(0.01, keys[i].x);
+        vec3 v = keys[i];
+        k = step(0.01, v.x);
         m += k;
         x = pow(2.0, float(i) / 12.0);
-        result += k * sin(tt * 100.0 * x);
+        result += k * (
+          sin(sin((t-v.y)*1.0*x/8.0+sin(t*4.0)*10.0))
+        ) * sin(tt*88.0*x+sin(t*2.0)/4.0) * 0.25;
       }
       return sqrt(abs(result)) * (result>0.0?1.0:-1.0);
     }`,
