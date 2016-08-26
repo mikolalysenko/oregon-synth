@@ -1,3 +1,5 @@
+let feedbackTextures
+
 module.exports = function ({
   regl,
   keyboard,
@@ -40,10 +42,13 @@ module.exports = function ({
     count: 3
   })
 
-  let drawFeedback, feedbackTextures
-  if (feedback) {
+  if (!feedbackTextures) {
     feedbackTextures = Array(2).fill().map(() =>
       regl.texture({ copy: true }))
+  }
+
+  let drawFeedback
+  if (feedback) {
     drawFeedback = regl({
       frag: `
       precision highp float;
