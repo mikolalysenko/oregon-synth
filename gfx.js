@@ -92,7 +92,7 @@ module.exports = function ({regl, keyboard}) {
       x: Array(NUM_KEYS).fill().map((_, i) => 2.0 * i / (NUM_KEYS - 1) - 1.0),
       key: regl.context('keys')
     },
-    lineWidth: Math.min(8, regl.limits.lineWidth[1]),
+    lineWidth: Math.min(8, regl.limits.lineWidthDims[1]),
     count: NUM_KEYS,
     primitive: 'line strip'
   })
