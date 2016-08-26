@@ -2,6 +2,7 @@ const wsock = require('websocket-stream')
 const to = require('to2')
 const split = require('split2')
 const onend = require('end-of-stream')
+const synthClock = require('./clock')
 
 const kmin = 24
 const kmax = 144
@@ -25,7 +26,7 @@ module.exports = function (clock) {
     function write (row, enc, next) {
       const keydown = (row.values[0] >> 4) & 1
       const k = row.values[1] - kmin
-      state.time = clock.time
+      state.time = synthClock.time
       state.keys[k] = keydown * row.values[2] / 128
       state.times[k * 2 + keydown] = state.time
       if (state.onChange) {

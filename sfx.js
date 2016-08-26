@@ -25,7 +25,10 @@ module.exports = function ({regl, audioContext, keyboard}) {
     float filter(vec3 keys[NUM_KEYS]) {
       float result = sample(0.0);
       for (int i = 1; i < 40; i++) {
-        result += sample(float(i)) * exp(-0.25 * float(i * i)) / 4.0;
+        result += sample(float(i)) * (exp(-0.25 * float(i * i)) / 4.0);
+      }
+      for (int i = 50; i < 80; ++i) {
+        result += sample(float(i)) * 0.8 * exp(-0.1 * pow(float(i) - 65.0, 2.0));
       }
       return result;
     }
