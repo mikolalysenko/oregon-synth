@@ -14,7 +14,7 @@ module.exports = function ({regl, audioContext, keyboard}) {
         k = step(0.01, keys[i]);
         m += k;
         x = pow(2.0, float(i) / 12.0);
-        result += k * sin(tt * 100.0 * x);
+        result += k * sin(tt * 100.0 * x) * 0.5;
       }
       return sqrt(abs(result)) * (result>0.0?1.0:-1.0);
     }`,
