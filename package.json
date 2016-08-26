@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/mikolalysenko/oregon-synth#readme",
   "dependencies": {
+    "angle-normals": "^1.0.0",
+    "column-mesh": "^1.0.1",
     "end-of-stream": "^1.1.0",
     "midi": "^0.9.5",
     "regl": "^1.0.0",
